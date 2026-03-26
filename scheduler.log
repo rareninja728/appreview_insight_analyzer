@@ -308,3 +308,368 @@ SUCCESS: Pipeline Completed Successfully!
 
 2026-03-26 16:03:52,199 - Scheduler - INFO - Weekly Pulse Job successfully completed.
 2026-03-26 16:03:52,199 - apscheduler.executors.default - INFO - Job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:08:37 IST)" executed successfully
+2026-03-26 16:07:24,110 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-26 16:07:24,110 - Scheduler - INFO - --- Scheduler Service Initialized ---
+2026-03-26 16:07:24,110 - Scheduler - INFO - Target: 3:20 PM IST (Asia/Kolkata)
+2026-03-26 16:07:24,113 - Scheduler - INFO - Target Email: sugandhawankar123@gmail.com
+2026-03-26 16:07:24,113 - Scheduler - INFO - Press Ctrl+C to exit
+2026-03-26 16:07:24,114 - apscheduler.scheduler - INFO - Added job "run_pulse_job" to job store "default"
+2026-03-26 16:07:24,114 - apscheduler.scheduler - INFO - Scheduler started
+2026-03-26 16:08:37,473 - apscheduler.executors.default - INFO - Running job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:13:37 IST)" (scheduled at 2026-03-26 16:08:37.459225+05:30)
+2026-03-26 16:08:37,473 - Scheduler - INFO - --- Starting Scheduled Weekly Pulse Job ---
+2026-03-26 16:08:37,473 - Scheduler - INFO - Triggering CLI: python cli.py run
+2026-03-26 16:08:50,327 - Scheduler - INFO - Pipeline Output:
+Starting Full Pipeline Cycle...
+============================================================
+INDmoney Weekly Review Pulse - Pipeline Starting
+   Time: 2026-03-26 16:08:38
+============================================================
+
+Phase 1: Fetching Reviews...
+[Apple] Fetched 6 reviews (last 1 weeks)
+[Google] Fetched 83 reviews (last 1 weeks)
+  Total raw reviews: 89
+
+Phase 1b: Stripping PII...
+[PII] Quality Filter: kept 35/89 reviews
+  Saved cleaned reviews: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\data\processed\reviews_cleaned.csv
+
+Phase 2: Generating Themes via Groq LLM...
+[Themes] Discovered 5 themes:
+  • App Stability: Users experience frequent crashes, freezes, and errors that cause losses or inconvenience.
+  • Investment Features: Users praise the app's comprehensive investment options, data analysis, and comparison features.
+  • Customer Support: Users express frustration with unresponsive, unhelpful, or unprofessional customer support.
+  • User Experience: Users suggest improvements to the app's UI/UX, including clutter, complexity, and tablet compatibility issues.
+  • Banking and Fees: Users criticize the app's banking and fees, including difficulties with bank account linking, brokerage charges, and GST.
+
+Phase 2b: Classifying Reviews into Themes...
+[Grouper] Classified 25/35 reviews
+[Grouper] Classified 35/35 reviews
+[Grouper] Theme distribution:
+  • User Experience: 14 reviews (40.0%)
+  • Banking and Fees: 8 reviews (22.9%)
+  • Investment Features: 6 reviews (17.1%)
+  • Customer Support: 3 reviews (8.6%)
+  • Other: 2 reviews (5.7%)
+  • App Stability: 2 reviews (5.7%)
+
+Phase 3: Building Weekly Pulse Note...
+[Note] Action generation failed: Expecting value: line 1 column 1 (char 0)
+[Note] Built weekly pulse: 152 words, 3 themes
+[Note] Saved to: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+
+Phase 4: Drafting Email...
+[Email] Draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+[Email] HTML draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.html
+[Email] SUCCESS: Sent to sugandhawankar123@gmail.com
+
+============================================================
+Pipeline Complete!
+   Reviews analyzed: 35
+   Themes found: 5
+   Weekly note: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+   Email sent: True
+   Email draft: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+============================================================
+SUCCESS: Pipeline Completed Successfully!
+
+2026-03-26 16:08:50,327 - Scheduler - INFO - Weekly Pulse Job successfully completed.
+2026-03-26 16:08:50,327 - apscheduler.executors.default - INFO - Job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:13:37 IST)" executed successfully
+2026-03-26 16:13:37,461 - apscheduler.executors.default - INFO - Running job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:18:37 IST)" (scheduled at 2026-03-26 16:13:37.459225+05:30)
+2026-03-26 16:13:37,461 - Scheduler - INFO - --- Starting Scheduled Weekly Pulse Job ---
+2026-03-26 16:13:37,461 - Scheduler - INFO - Triggering CLI: python cli.py run
+2026-03-26 16:13:51,768 - Scheduler - INFO - Pipeline Output:
+Starting Full Pipeline Cycle...
+============================================================
+INDmoney Weekly Review Pulse - Pipeline Starting
+   Time: 2026-03-26 16:13:38
+============================================================
+
+Phase 1: Fetching Reviews...
+[Apple] Fetched 6 reviews (last 1 weeks)
+[Google] Fetched 84 reviews (last 1 weeks)
+  Total raw reviews: 90
+
+Phase 1b: Stripping PII...
+[PII] Quality Filter: kept 35/90 reviews
+  Saved cleaned reviews: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\data\processed\reviews_cleaned.csv
+
+Phase 2: Generating Themes via Groq LLM...
+[Themes] Discovered 5 themes:
+  • App Stability: Users experience frequent crashes, freezes, and errors that cause losses and frustration.
+  • Investment Features: Users appreciate the app's comprehensive investment options, data analysis, and portfolio tracking features.
+  • Customer Support: Users express disappointment with the app's customer support, citing unhelpful responses, unresolved issues, and long wait times.
+  • User Interface: Users suggest improvements to the app's UI/UX, including clutter reduction, tablet compatibility, and layout updates.
+  • Bank Integration: Users request additional bank account funding options, easier bank detail addition, and improved Federal Bank verification processes.
+
+Phase 2b: Classifying Reviews into Themes...
+[Grouper] Classified 25/35 reviews
+[Grouper] Classified 35/35 reviews
+[Grouper] Theme distribution:
+  • Investment Features: 14 reviews (40.0%)
+  • Customer Support: 7 reviews (20.0%)
+  • Bank Integration: 5 reviews (14.3%)
+  • User Interface: 5 reviews (14.3%)
+  • Other: 2 reviews (5.7%)
+  • App Stability: 2 reviews (5.7%)
+
+Phase 3: Building Weekly Pulse Note...
+[Note] Action generation failed: Expecting value: line 1 column 1 (char 0)
+[Note] Built weekly pulse: 148 words, 3 themes
+[Note] Saved to: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+
+Phase 4: Drafting Email...
+[Email] Draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+[Email] HTML draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.html
+[Email] SUCCESS: Sent to sugandhawankar123@gmail.com
+
+============================================================
+Pipeline Complete!
+   Reviews analyzed: 35
+   Themes found: 5
+   Weekly note: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+   Email sent: True
+   Email draft: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+============================================================
+SUCCESS: Pipeline Completed Successfully!
+
+2026-03-26 16:13:51,768 - Scheduler - INFO - Weekly Pulse Job successfully completed.
+2026-03-26 16:13:51,768 - apscheduler.executors.default - INFO - Job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:18:37 IST)" executed successfully
+2026-03-26 16:18:37,475 - apscheduler.executors.default - INFO - Running job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:23:37 IST)" (scheduled at 2026-03-26 16:18:37.459225+05:30)
+2026-03-26 16:18:37,475 - Scheduler - INFO - --- Starting Scheduled Weekly Pulse Job ---
+2026-03-26 16:18:37,475 - Scheduler - INFO - Triggering CLI: python cli.py run
+2026-03-26 16:18:49,359 - Scheduler - INFO - Pipeline Output:
+Starting Full Pipeline Cycle...
+============================================================
+INDmoney Weekly Review Pulse - Pipeline Starting
+   Time: 2026-03-26 16:18:38
+============================================================
+
+Phase 1: Fetching Reviews...
+[Apple] Fetched 6 reviews (last 1 weeks)
+[Google] Fetched 85 reviews (last 1 weeks)
+  Total raw reviews: 91
+
+Phase 1b: Stripping PII...
+[PII] Quality Filter: kept 36/91 reviews
+  Saved cleaned reviews: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\data\processed\reviews_cleaned.csv
+
+Phase 2: Generating Themes via Groq LLM...
+[Themes] Discovered 5 themes:
+  • App Stability: Frequent crashes, freezes, and errors
+  • Investment Features: Variety of investment options, easy switching between funds, and detailed analysis
+  • User Experience: Cluttered UI/UX, difficult navigation, and poor tablet compatibility
+  • Customer Support: Unresponsive, unhelpful, and unprofessional customer service
+  • Bank Integration: Difficulty adding bank details, lack of customer care contact numbers, and slow refunds
+
+Phase 2b: Classifying Reviews into Themes...
+[Grouper] Classified 25/36 reviews
+[Grouper] Classified 36/36 reviews
+[Grouper] Theme distribution:
+  • User Experience: 15 reviews (41.7%)
+  • Investment Features: 7 reviews (19.4%)
+  • Bank Integration: 6 reviews (16.7%)
+  • Other: 3 reviews (8.3%)
+  • Customer Support: 3 reviews (8.3%)
+  • App Stability: 2 reviews (5.6%)
+
+Phase 3: Building Weekly Pulse Note...
+[Note] Built weekly pulse: 197 words, 3 themes
+[Note] Saved to: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+
+Phase 4: Drafting Email...
+[Email] Draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+[Email] HTML draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.html
+[Email] SUCCESS: Sent to sugandhawankar123@gmail.com
+
+============================================================
+Pipeline Complete!
+   Reviews analyzed: 36
+   Themes found: 5
+   Weekly note: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+   Email sent: True
+   Email draft: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+============================================================
+SUCCESS: Pipeline Completed Successfully!
+
+2026-03-26 16:18:49,360 - Scheduler - INFO - Weekly Pulse Job successfully completed.
+2026-03-26 16:18:49,360 - apscheduler.executors.default - INFO - Job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:23:37 IST)" executed successfully
+2026-03-26 16:23:37,470 - apscheduler.executors.default - INFO - Running job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:28:37 IST)" (scheduled at 2026-03-26 16:23:37.459225+05:30)
+2026-03-26 16:23:37,471 - Scheduler - INFO - --- Starting Scheduled Weekly Pulse Job ---
+2026-03-26 16:23:37,471 - Scheduler - INFO - Triggering CLI: python cli.py run
+2026-03-26 16:23:48,190 - Scheduler - INFO - Pipeline Output:
+Starting Full Pipeline Cycle...
+============================================================
+INDmoney Weekly Review Pulse - Pipeline Starting
+   Time: 2026-03-26 16:23:38
+============================================================
+
+Phase 1: Fetching Reviews...
+[Apple] Fetched 6 reviews (last 1 weeks)
+[Google] Fetched 85 reviews (last 1 weeks)
+  Total raw reviews: 91
+
+Phase 1b: Stripping PII...
+[PII] Quality Filter: kept 36/91 reviews
+  Saved cleaned reviews: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\data\processed\reviews_cleaned.csv
+
+Phase 2: Generating Themes via Groq LLM...
+[Themes] Discovered 5 themes:
+  • App Stability: Users experienced frequent crashes, freezes, and failed transactions.
+  • Investment Features: Users praise the app's comprehensive investment options, data analysis, and easy switching between fund types.
+  • User Experience: Users appreciate the app's simplicity, ease of use, and convenient tracking features.
+  • Customer Support: Users express frustration with poor customer service, unresponsive support, and unresolved issues.
+  • Technical Issues: Users report difficulties with app installation, tablet compatibility, and bank verification processes.
+
+Phase 2b: Classifying Reviews into Themes...
+[Grouper] Classified 25/36 reviews
+[Grouper] Classified 36/36 reviews
+[Grouper] Theme distribution:
+  • User Experience: 11 reviews (30.6%)
+  • Investment Features: 10 reviews (27.8%)
+  • Customer Support: 7 reviews (19.4%)
+  • Other: 3 reviews (8.3%)
+  • Technical Issues: 3 reviews (8.3%)
+  • App Stability: 2 reviews (5.6%)
+
+Phase 3: Building Weekly Pulse Note...
+[Note] Action generation failed: Expecting value: line 1 column 1 (char 0)
+[Note] Built weekly pulse: 143 words, 3 themes
+[Note] Saved to: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+
+Phase 4: Drafting Email...
+[Email] Draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+[Email] HTML draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.html
+[Email] SUCCESS: Sent to sugandhawankar123@gmail.com
+
+============================================================
+Pipeline Complete!
+   Reviews analyzed: 36
+   Themes found: 5
+   Weekly note: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+   Email sent: True
+   Email draft: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+============================================================
+SUCCESS: Pipeline Completed Successfully!
+
+2026-03-26 16:23:48,190 - Scheduler - INFO - Weekly Pulse Job successfully completed.
+2026-03-26 16:23:48,190 - apscheduler.executors.default - INFO - Job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:28:37 IST)" executed successfully
+2026-03-26 16:28:37,475 - apscheduler.executors.default - INFO - Running job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:33:37 IST)" (scheduled at 2026-03-26 16:28:37.459225+05:30)
+2026-03-26 16:28:37,475 - Scheduler - INFO - --- Starting Scheduled Weekly Pulse Job ---
+2026-03-26 16:28:37,475 - Scheduler - INFO - Triggering CLI: python cli.py run
+2026-03-26 16:28:51,398 - Scheduler - INFO - Pipeline Output:
+Starting Full Pipeline Cycle...
+============================================================
+INDmoney Weekly Review Pulse - Pipeline Starting
+   Time: 2026-03-26 16:28:38
+============================================================
+
+Phase 1: Fetching Reviews...
+[Apple] Fetched 6 reviews (last 1 weeks)
+[Google] Fetched 86 reviews (last 1 weeks)
+  Total raw reviews: 92
+
+Phase 1b: Stripping PII...
+[PII] Quality Filter: kept 37/92 reviews
+  Saved cleaned reviews: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\data\processed\reviews_cleaned.csv
+
+Phase 2: Generating Themes via Groq LLM...
+[Themes] Discovered 5 themes:
+  • App Stability: Users experience frequent crashes, issues with installation, and difficulties with account closure or refunds.
+  • Investment Features: Users praise the app's comprehensive investment options, easy switching between funds, and access to US market investing.
+  • Customer Support: Users express frustration with unresponsive customer support, delayed refunds, and unresolved issues.
+  • User Experience: Users appreciate the app's simplicity, ease of use, and comprehensive data analysis, but some find the UI/UX cluttered or difficult to navigate.
+  • Bank Integration: Users request improvements to bank integration, including easier bank account linking, federal bank verification, and tablet compatibility.
+
+Phase 2b: Classifying Reviews into Themes...
+[Grouper] Classified 25/37 reviews
+[Grouper] Classified 37/37 reviews
+[Grouper] Theme distribution:
+  • User Experience: 13 reviews (35.1%)
+  • Investment Features: 8 reviews (21.6%)
+  • Customer Support: 6 reviews (16.2%)
+  • Bank Integration: 5 reviews (13.5%)
+  • Other: 3 reviews (8.1%)
+  • App Stability: 2 reviews (5.4%)
+
+Phase 3: Building Weekly Pulse Note...
+[Note] Action generation failed: Expecting value: line 1 column 1 (char 0)
+[Note] Built weekly pulse: 138 words, 3 themes
+[Note] Saved to: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+
+Phase 4: Drafting Email...
+[Email] Draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+[Email] HTML draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.html
+[Email] SUCCESS: Sent to sugandhawankar123@gmail.com
+
+============================================================
+Pipeline Complete!
+   Reviews analyzed: 37
+   Themes found: 5
+   Weekly note: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+   Email sent: True
+   Email draft: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+============================================================
+SUCCESS: Pipeline Completed Successfully!
+
+2026-03-26 16:28:51,398 - Scheduler - INFO - Weekly Pulse Job successfully completed.
+2026-03-26 16:28:51,398 - apscheduler.executors.default - INFO - Job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:33:37 IST)" executed successfully
+2026-03-26 16:33:37,465 - apscheduler.executors.default - INFO - Running job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:38:37 IST)" (scheduled at 2026-03-26 16:33:37.459225+05:30)
+2026-03-26 16:33:37,465 - Scheduler - INFO - --- Starting Scheduled Weekly Pulse Job ---
+2026-03-26 16:33:37,466 - Scheduler - INFO - Triggering CLI: python cli.py run
+2026-03-26 16:33:55,418 - Scheduler - INFO - Pipeline Output:
+Starting Full Pipeline Cycle...
+============================================================
+INDmoney Weekly Review Pulse - Pipeline Starting
+   Time: 2026-03-26 16:33:39
+============================================================
+
+Phase 1: Fetching Reviews...
+[Apple] Fetched 6 reviews (last 1 weeks)
+[Google] Fetched 86 reviews (last 1 weeks)
+  Total raw reviews: 92
+
+Phase 1b: Stripping PII...
+[PII] Quality Filter: kept 37/92 reviews
+  Saved cleaned reviews: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\data\processed\reviews_cleaned.csv
+
+Phase 2: Generating Themes via Groq LLM...
+[Themes] Discovered 5 themes:
+  • App Stability: Users report frequent crashes, issues with installation, and problems with account verification.
+  • Investment Features: Users praise the app for its comprehensive investment options, easy switching between funds, and detailed analysis.
+  • Customer Support: Users express frustration with unresponsive customer support, unresolved issues, and difficulty in closing accounts.
+  • User Experience: Users suggest improvements to the app's UI/UX, including a more intuitive layout, better navigation, and easier access to features.
+  • Bank Integration: Users report difficulties with linking bank accounts, adding bank details, and transferring funds between accounts.
+
+Phase 2b: Classifying Reviews into Themes...
+[Grouper] Classified 25/37 reviews
+[Grouper] Classified 37/37 reviews
+[Grouper] Theme distribution:
+  • Investment Features: 11 reviews (29.7%)
+  • User Experience: 11 reviews (29.7%)
+  • Customer Support: 7 reviews (18.9%)
+  • Bank Integration: 3 reviews (8.1%)
+  • App Stability: 3 reviews (8.1%)
+  • Other: 2 reviews (5.4%)
+
+Phase 3: Building Weekly Pulse Note...
+[Note] Built weekly pulse: 190 words, 3 themes
+[Note] Saved to: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+
+Phase 4: Drafting Email...
+[Email] Draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+[Email] HTML draft saved: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.html
+[Email] SUCCESS: Sent to sugandhawankar123@gmail.com
+
+============================================================
+Pipeline Complete!
+   Reviews analyzed: 37
+   Themes found: 5
+   Weekly note: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\weekly_notes\week_W13-2026.md
+   Email sent: True
+   Email draft: C:\Users\Apurva\New folder (2)\appreview_insight_analyzer\outputs\email_drafts\email_draft_W13-2026.txt
+============================================================
+SUCCESS: Pipeline Completed Successfully!
+
+2026-03-26 16:33:55,418 - Scheduler - INFO - Weekly Pulse Job successfully completed.
+2026-03-26 16:33:55,418 - apscheduler.executors.default - INFO - Job "run_pulse_job (trigger: interval[0:05:00], next run at: 2026-03-26 16:38:37 IST)" executed successfully

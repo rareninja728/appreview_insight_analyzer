@@ -4,8 +4,8 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-# Railway dynamically assigns a PORT, we default to 8000
-ENV PORT=8000
+# Railway dynamically assigns a PORT, we default to 8080
+ENV PORT=8080
 
 # Set work directory
 WORKDIR /app
