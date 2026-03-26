@@ -1,0 +1,33 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.git/
+.github/
+.vscode/
+
+# Ignore Next.js frontend directory as we deploy the backend separately
+frontend_next/
+node_modules/
+.next/
+
+# Ignore raw/processed data and outputs if deploying stateless
+data/raw/*
+data/processed/*
+outputs/weekly_notes/*
+outputs/email_drafts/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!outputs/weekly_notes/.gitkeep
+!outputs/email_drafts/.gitkeep
+
+# Ignore DBs and Logs
+*.sqlite3
+scheduler.log

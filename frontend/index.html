@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INDmoney Weekly Pulse Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Main Header Banner -->
+        <header class="main-header">
+            <div class="header-content">
+                <h1>INDmoney Weekly Pulse</h1>
+                <p>Your weekly digest of user feedback insights</p>
+                <div class="timestamp-badge" id="last-generated">
+                    <span class="dot"></span> Last Generated: Loading...
+                </div>
+            </div>
+        </header>
+
+        <!-- Action Bar -->
+        <div class="action-card">
+            <div class="input-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email-input" placeholder="Enter email address" value="sugandhawankar123@gmail.com">
+                </div>
+                <button id="generate-pulse-btn" class="glow-btn">
+                    <i class="fas fa-sync-alt"></i> Generate Pulse
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Left: Review Analytics -->
+            <div class="card analytics-card">
+                <div class="card-header">
+                    <div class="header-left">
+                        <span class="label">REVIEW ANALYTICS</span>
+                        <h2>Review Volume Over Time</h2>
+                    </div>
+                    <div class="header-right">
+                        <div class="dropdown">
+                            <span class="dropdown-toggle"><i class="fas fa-calendar-alt"></i> 1W <i class="fas fa-chevron-down"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="volumeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Right: Current Week Insights -->
+            <div class="insights-panel">
+                <span class="label">CURRENT WEEK INSIGHTS</span>
+                <h2>(1 WEEK)</h2>
+                
+                <div class="mini-cards">
+                    <div class="mini-card">
+                        <span class="mini-label">TOTAL REVIEWS</span>
+                        <div class="mini-value" id="total-reviews-count">0</div>
+                        <div class="mini-trend positive">+0%</div>
+                    </div>
+                    <div class="mini-card">
+                        <span class="mini-label">TIME PERIOD</span>
+                        <div class="mini-value" id="time-period">1 week</div>
+                    </div>
+                </div>
+
+                <div class="mini-card full-width">
+                    <div class="sentiment-row">
+                        <span class="mini-label">AVG. SENTIMENT</span>
+                        <div class="sentiment-value-box">
+                            <span class="sentiment-value" id="avg-sentiment">0.0</span>
+                            <span class="mini-trend positive">+0.0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Themes Section -->
+                <div class="themes-section">
+                    <div class="themes-header">
+                        <i class="fas fa-exclamation-triangle warning-icon"></i>
+                        <span class="label">THEMES REQUIRING IMMEDIATE ACTION</span>
+                    </div>
+                    <div class="themes-container" id="themes-list">
+                        <div class="theme-placeholder">Generate a pulse to see action themes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pipeline Modal (Hidden) -->
+        <div id="pipeline-modal" class="modal">
+            <div class="modal-content">
+                <h3>Processing Review Pulse...</h3>
+                <div class="progress-steps">
+                    <div class="p-step" id="p1"><span>1</span> Ingesting Reviews</div>
+                    <div class="p-step" id="p2"><span>2</span> Deep Analysis</div>
+                    <div class="p-step" id="p3"><span>3</span> Building Report</div>
+                    <div class="p-step" id="p4"><span>4</span> Sending Pulse</div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="main-progress"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
