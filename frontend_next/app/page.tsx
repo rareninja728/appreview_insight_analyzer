@@ -56,23 +56,41 @@ export default function Dashboard() {
   const [weeks, setWeeks] = useState(1);
   const [loading, setLoading] = useState(false);
   const [pipelineStep, setPipelineStep] = useState(0);
-  const [stats, setStats] = useState({ total: 489, rating: 4.2, weeks: 1 });
+  const [stats, setStats] = useState({ total: 0, rating: 0.0, weeks: 1 });
+  const [reviewsData, setReviewsData] = useState([]);
   
-  const mockData = [
-    { name: "Mon", reviews: 12 },
-    { name: "Tue", reviews: 19 },
-    { name: "Wed", reviews: 15 },
-    { name: "Thu", reviews: 22 },
-    { name: "Fri", reviews: 18 },
-    { name: "Sat", reviews: 25 },
-    { name: "Sun", reviews: 30 },
-  ];
+  const API_BASE = "https://appreviewinsightanalyzer-production.up.railway.app";
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const resp = await fetch(`${API_BASE}/api/reviews?limit=1000`);
+      const data = await resp.json();
+      if (data && data.length > 0) {
+        setReviewsData(data);
+        const avg = data.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / data.length;
+        setStats({ total: data.length, rating: Number(avg.toFixed(1)), weeks: 1 });
+      }
+    } catch (e) {
+      console.error("Failed to fetch stats:", e);
+    }
+  };
 
   const runPipeline = async () => {
     setLoading(true);
     setPipelineStep(1);
     
     try {
+      // Step 0: Sync Config (Weeks & Email)
+      await fetch(`${API_BASE}/api/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email_address: email, weeks_back: weeks })
+      });
+
       // Simulate steps for UI feel
       await new Promise(r => setTimeout(r, 1500));
       setPipelineStep(2);
@@ -80,22 +98,45 @@ export default function Dashboard() {
       setPipelineStep(3);
       await new Promise(r => setTimeout(r, 1500));
       setPipelineStep(4);
-      await new Promise(r => setTimeout(r, 1000));
       
-      // Actual call (would talk to your backend API)
-      // await fetch('https://appreviewinsightanalyzer-production.up.railway.app/api/pipeline/run', { 
-      //    method: 'POST', 
-      //    headers: { 'Content-Type': 'application/json' },
-      //    body: JSON.stringify({ email: email, weeks_back: weeks }) 
-      // });
+      // Actual Pipeline Run
+      const response = await fetch(`${API_BASE}/api/run_pipeline`, { 
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ email: email, weeks_back: weeks }) 
+      });
       
+      if (!response.ok) throw new Error("Pipeline Execution Failed");
+      
+      setPipelineStep(0);
       alert("✅ Weekly Pulse successfully sent!");
+      // Optionally reload data here
     } catch (e) {
-      alert("❌ Pipeline failed");
+      alert("❌ Pipeline failed: " + (e as Error).message);
     } finally {
       setLoading(false);
       setPipelineStep(0);
     }
+  };
+
+  const deriveChartData = () => {
+    if (!reviewsData || reviewsData.length === 0) {
+      return [
+        { name: "Mon", reviews: 0 }, { name: "Tue", reviews: 0 }, { name: "Wed", reviews: 0 },
+        { name: "Thu", reviews: 0 }, { name: "Fri", reviews: 0 }, { name: "Sat", reviews: 0 }, { name: "Sun", reviews: 0 }
+      ];
+    }
+    // Simple mock spread for UI demo if no dates available, 
+    // or we could count by day if we had date strings in reviews.
+    return [
+      { name: "Mon", reviews: Math.floor(stats.total * 0.1) },
+      { name: "Tue", reviews: Math.floor(stats.total * 0.15) },
+      { name: "Wed", reviews: Math.floor(stats.total * 0.2) },
+      { name: "Thu", reviews: Math.floor(stats.total * 0.12) },
+      { name: "Fri", reviews: Math.floor(stats.total * 0.18) },
+      { name: "Sat", reviews: Math.floor(stats.total * 0.1) },
+      { name: "Sun", reviews: Math.floor(stats.total * 0.15) },
+    ];
   };
 
   return (
@@ -168,12 +209,12 @@ export default function Dashboard() {
                   <h2 className="text-2xl font-bold mt-1">Review Volume Trends</h2>
                 </div>
                 <div className="flex gap-2">
-                  <div className="bg-[#0d1117] px-4 py-2 rounded-xl text-xs font-bold border border-[#30363d]">LAST 7 DAYS</div>
+                  <div className="bg-[#0d1117] px-4 py-2 rounded-xl text-xs font-bold border border-[#30363d]">LAST {weeks} WEEKS</div>
                 </div>
               </div>
               <div className="h-[340px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={mockData}>
+                  <BarChart data={deriveChartData()}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#30363d" />
                     <XAxis 
                       dataKey="name" 
@@ -203,8 +244,8 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               <MetricCard title="Total Reviews" value="489" trend="+12.5%" icon={BarChart3} color="blue" />
-               <MetricCard title="Avg Rating" value="4.2/5" trend="+0.1" icon={TrendingUp} color="green" />
+               <MetricCard title="Total Reviews" value={stats.total.toString()} trend="+12.5%" icon={BarChart3} color="blue" />
+               <MetricCard title="Avg Rating" value={`${stats.rating}/5`} trend="+0.1" icon={TrendingUp} color="green" />
             </div>
           </div>
 
