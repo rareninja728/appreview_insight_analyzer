@@ -91,12 +91,12 @@ export default function Dashboard() {
         body: JSON.stringify({ email_address: email, weeks_back: weeks })
       });
 
-      // Simulate steps for UI feel
-      await new Promise(r => setTimeout(r, 1500));
+      // Simulate steps for UI feel (Optimized speed)
+      await new Promise(r => setTimeout(r, 600));
       setPipelineStep(2);
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 600));
       setPipelineStep(3);
-      await new Promise(r => setTimeout(r, 1500));
+      await new Promise(r => setTimeout(r, 400));
       setPipelineStep(4);
       
       // Actual Pipeline Run
