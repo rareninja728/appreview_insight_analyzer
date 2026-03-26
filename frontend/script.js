@@ -91,6 +91,7 @@ function setupGenerateAction() {
 
     btn.onclick = async () => {
         const email = emailInput.value.trim();
+        const weeks = document.getElementById('weeks-input').value;
         if (!email) return showToast('Please enter an email address', 'danger');
 
         // Show modal and reset steps
@@ -100,6 +101,9 @@ function setupGenerateAction() {
         resetSteps();
 
         try {
+            // Update Backend Config first
+            await callApi('/api/config', 'POST', { email_address: email, weeks_back: weeks });
+
             // STEP 1: Ingest
             updateStep(1, 'active');
             progressBar.style.width = '25%';

@@ -53,6 +53,7 @@ const ThemeCard = ({ label, description, urgency }: any) => {
 
 export default function Dashboard() {
   const [email, setEmail] = useState("sugandhawankar123@gmail.com");
+  const [weeks, setWeeks] = useState(1);
   const [loading, setLoading] = useState(false);
   const [pipelineStep, setPipelineStep] = useState(0);
   const [stats, setStats] = useState({ total: 489, rating: 4.2, weeks: 1 });
@@ -81,8 +82,12 @@ export default function Dashboard() {
       setPipelineStep(4);
       await new Promise(r => setTimeout(r, 1000));
       
-      // Actual call (would talk to your backend)
-      // await fetch('/api/run_pipeline', { method: 'POST', body: JSON.stringify({ email }) });
+      // Actual call (would talk to your backend API)
+      // await fetch('https://appreviewinsightanalyzer-production.up.railway.app/api/pipeline/run', { 
+      //    method: 'POST', 
+      //    headers: { 'Content-Type': 'application/json' },
+      //    body: JSON.stringify({ email: email, weeks_back: weeks }) 
+      // });
       
       alert("✅ Weekly Pulse successfully sent!");
     } catch (e) {
@@ -123,6 +128,23 @@ export default function Dashboard() {
                 className="w-full bg-[#0d1117] border border-[#30363d] rounded-2xl py-4 pl-14 pr-6 focus:outline-none focus:border-[#00d284] focus:ring-4 focus:ring-[#00d284]/10 transition-all text-lg font-medium"
               />
             </div>
+            
+            {/* Weeks Selection Dropdown */}
+            <div className="w-full md:w-32 relative group">
+               <select 
+                  value={weeks} 
+                  onChange={(e) => setWeeks(Number(e.target.value))}
+                  className="w-full bg-[#0d1117] border border-[#30363d] rounded-2xl py-4 px-4 focus:outline-none focus:border-[#00d284] focus:ring-4 focus:ring-[#00d284]/10 transition-all text-lg font-bold text-[#00d284] appearance-none cursor-pointer"
+               >
+                  <option value={1}>1 Week</option>
+                  <option value={2}>2 Weeks</option>
+                  <option value={3}>3 Weeks</option>
+                  <option value={4}>4 Weeks</option>
+                  <option value={8}>8 Weeks</option>
+                  <option value={12}>12 Weeks</option>
+               </select>
+            </div>
+
             <button 
               onClick={runPipeline}
               disabled={loading}

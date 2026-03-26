@@ -183,10 +183,15 @@ async def send_email_api():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/run_pipeline")
-async def run_pipeline_api():
+async def run_pipeline_api(data: Dict = Body(default={})):
     """Trigger the full one-click pipeline."""
     try:
-        logger.info("Running full pipeline...")
+        if "weeks_back" in data:
+            config.WEEKS_BACK = int(data["weeks_back"])
+        if "email" in data:
+            config.EMAIL_ADDRESS = data["email"]
+            
+        logger.info(f"Running full pipeline for {config.WEEKS_BACK} weeks, sending to: {config.EMAIL_ADDRESS}")
         results = run_weekly_pulse()
         return results
     except Exception as e:
