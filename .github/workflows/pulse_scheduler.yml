@@ -2,37 +2,104 @@ name: INDmoney Weekly Pulse Scheduler
 
 on:
   schedule:
-    # Runs every 5 minutes as requested. 
     # Runs daily at 09:50 UTC (3:20 PM IST)
     - cron: '50 9 * * *'
-  # Allows you to trigger the workflow manually from the GitHub Actions tab
+  # Allows manual trigger from the GitHub Actions tab
   workflow_dispatch:
+    inputs:
+      skip_email:
+        description: 'Skip sending email (dry-run mode)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   execute-weekly-pulse:
     runs-on: ubuntu-latest
-    
+    # Hard timeout — prevents hung SMTP or LLM calls from burning minutes
+    timeout-minutes: 15
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
-      - name: Set up Python
+
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          
-      - name: Run Weekly Pulse Pipeline
+
+      # ── Validate secrets BEFORE running the pipeline ─────────────────────
+      # This provides a clear, actionable error message if secrets are missing
+      # in GitHub → Settings → Secrets and variables → Actions.
+      - name: Validate required secrets
         env:
-          # These secrets must be added to your GitHub Repository Settings -> Secrets and variables -> Actions
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
         run: |
-          # This command executes the full pipeline and sends the email
-          python cli.py run
+          MISSING=()
+          [ -z "$GROQ_API_KEY" ]       && MISSING+=("GROQ_API_KEY")
+          [ -z "$EMAIL_ADDRESS" ]      && MISSING+=("EMAIL_ADDRESS")
+          [ -z "$EMAIL_APP_PASSWORD" ] && MISSING+=("EMAIL_APP_PASSWORD")
+
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo "::error::Missing GitHub Secrets: ${MISSING[*]}"
+            echo ""
+            echo "Fix: Go to your repository → Settings → Secrets and variables"
+            echo "     → Actions → New repository secret"
+            echo ""
+            echo "Required secrets:"
+            echo "  GROQ_API_KEY       — from console.groq.com"
+            echo "  EMAIL_ADDRESS      — your Gmail address"
+            echo "  EMAIL_APP_PASSWORD — Gmail App Password (NOT your login password)"
+            exit 1
+          fi
+
+          echo "✅ All required secrets are present."
+
+      # ── Run the pipeline ──────────────────────────────────────────────────
+      - name: Run Weekly Pulse Pipeline
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          # Optional overrides — set in secrets or leave to defaults
+          GROQ_MODEL: ${{ secrets.GROQ_MODEL || 'llama-3.1-8b-instant' }}
+          SMTP_SERVER: ${{ vars.SMTP_SERVER || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ vars.SMTP_PORT || '465' }}
+          WEEKS_BACK: ${{ vars.WEEKS_BACK || '1' }}
+          MAX_THEMES: ${{ vars.MAX_THEMES || '5' }}
+        run: |
+          # Determine email flag
+          SKIP_ARG=""
+          if [ "${{ github.event.inputs.skip_email }}" = "true" ]; then
+            SKIP_ARG="--skip-email"
+            echo "Dry-run mode: Email will NOT be sent."
+          fi
+
+          echo "Starting INDmoney Weekly Pulse..."
+          python cli.py run $SKIP_ARG
+
+      # ── Upload generated outputs as artifacts for download/debugging ──────
+      - name: Upload pulse outputs
+        uses: actions/upload-artifact@v4
+        if: always()   # Upload even on failure so we can inspect what was generated
+        with:
+          name: pulse-outputs-${{ github.run_id }}
+          path: |
+            outputs/weekly_notes/
+            outputs/email_drafts/
+            data/processed/
+          retention-days: 14
+          if-no-files-found: ignore
