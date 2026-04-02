@@ -81,6 +81,12 @@ jobs:
           WEEKS_BACK: ${{ vars.WEEKS_BACK || '1' }}
           MAX_THEMES: ${{ vars.MAX_THEMES || '5' }}
         run: |
+          # Debug: Verify environment variables are set
+          echo "GROQ_API_KEY is set: $(if [ -n "$GROQ_API_KEY" ]; then echo "YES (${#GROQ_API_KEY} chars)"; else echo "NO"; fi)"
+          echo "EMAIL_ADDRESS is set: $(if [ -n "$EMAIL_ADDRESS" ]; then echo "YES"; else echo "NO"; fi)"
+          echo "EMAIL_APP_PASSWORD is set: $(if [ -n "$EMAIL_APP_PASSWORD" ]; then echo "YES (${#EMAIL_APP_PASSWORD} chars)"; else echo "NO"; fi)"
+          echo "GEMINI_API_KEY is set: $(if [ -n "$GEMINI_API_KEY" ]; then echo "YES (${#GEMINI_API_KEY} chars)"; else echo "NO"; fi)"
+          
           # Determine email flag
           SKIP_ARG=""
           if [ "${{ github.event.inputs.skip_email }}" = "true" ]; then

@@ -15,6 +15,8 @@ from groq import Groq
 
 def _get_client() -> Groq:
     """Initialize Groq client."""
+    if not config.GROQ_API_KEY:
+        raise ValueError("GROQ_API_KEY is not set. Please check your environment variables or GitHub Secrets.")
     return Groq(api_key=config.GROQ_API_KEY)
 
 

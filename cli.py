@@ -113,12 +113,24 @@ def run(
     """Run the entire end-to-end pipeline (fetch -> analyze -> report -> email)."""
     typer.echo("Starting Full Pipeline Cycle...")
     results = run_weekly_pulse(target_week=week, skip_email=skip_email)
-    
-    if "error" in results:
-        typer.echo(f"FAILED: Pipeline failed: {results['error']}")
+
+    if results.get("status") == "error":
+        msg = results.get("message", "Unknown error")
+        if "No reviews" in msg:
+            typer.echo(f"WARNING: {msg}. Treating as non-fatal — skipping report generation.")
+            raise typer.Exit(code=0)  # Not a failure — just no data this period
+        typer.echo(f"FAILED: Pipeline error: {msg}")
+        if results.get("traceback"):
+            typer.echo(results["traceback"])
         raise typer.Exit(code=1)
-    
+
     typer.echo("SUCCESS: Pipeline Completed Successfully!")
+    email_result = results.get("email", {})
+    if email_result.get("sent"):
+        typer.echo(f"Email sent to: {email_result.get('to')}")
+    else:
+        typer.echo("WARNING: Email delivery failed or was skipped. Check logs.")
+
 
 @app.command()
 def version():

@@ -59,7 +59,20 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ total: 0, rating: 0.0, weeks: 1 });
   const [reviewsData, setReviewsData] = useState([]);
   
-  const API_BASE = "https://appreviewinsightanalyzer-production.up.railway.app";
+  const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "https://appreviewinsightanalyzer-production.up.railway.app";
+
+  const testConnection = async () => {
+    try {
+      console.log(`Connecting to: ${API_BASE}/api/health`);
+      const res = await fetch(`${API_BASE}/api/health`);
+      const data = await res.json();
+      console.log("Backend OK:", data);
+      alert(`Backend Status: ${data.status}\nMessage: ${data.message}`);
+    } catch (err) {
+      console.error("Connection failed:", err);
+      alert("Backend connection failed. Check console and Vercel environment variables.");
+    }
+  };
 
   useEffect(() => {
     fetchStats();
@@ -147,6 +160,14 @@ export default function Dashboard() {
         <div className="text-center z-10">
           <h1 className="text-5xl font-black mb-3">INDmoney Weekly Pulse</h1>
           <p className="text-lg opacity-90 font-light tracking-wide italic font-body">Your weekly digest of user feedback insights</p>
+          
+          {/* Debug Connection Button */}
+          <button 
+            onClick={testConnection}
+            className="mt-6 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white px-4 py-1.5 rounded-full text-[10px] font-bold border border-white/10 transition-all uppercase tracking-widest"
+          >
+            Check Backend Connectivity
+          </button>
         </div>
         <div className="absolute bottom-6 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold border border-white/20 flex items-center gap-2">
           <span className="w-2.5 h-2.5 bg-white rounded-full animate-pulse shadow-[0_0_10px_white]"></span>

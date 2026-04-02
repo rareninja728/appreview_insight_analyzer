@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
@@ -8,6 +8,14 @@ import pandas as pd
 from typing import Optional, List, Dict
 import json
 import logging
+import traceback
+
+# ── Step 3: Deep Logging Configuration ──────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("INDmoney-API")
 
 # Add project root to sys path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -22,20 +30,23 @@ from src.analysis.review_grouper import assign_themes
 from src.report.note_builder import build_weekly_note, save_note
 from src.report.email_drafter import draft_and_send, compose_email, send_email
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 app = FastAPI(title="INDmoney Review Pulse API")
 
-# Enable CORS for local development
+# ── Step 7: Verify CORS & Public Exposure ───────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # In production, replace with specific domains for security
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"Incoming request: {request.method} {request.url}")
+    response = await call_next(request)
+    logger.info(f"Response status: {response.status_code}")
+    return response
 
 # ── API Endpoints ───────────────────────────────────────────
 
@@ -47,170 +58,71 @@ async def get_config():
         "email_address": config.EMAIL_ADDRESS,
         "weeks_back": config.WEEKS_BACK,
         "max_themes": config.MAX_THEMES,
-        "note_max_words": config.NOTE_MAX_WORDS
+        "note_max_words": config.NOTE_MAX_WORDS,
+        "backend_url": config.BACKEND_URL
     }
 
-@app.post("/api/config")
-async def update_config(data: Dict = Body(...)):
-    """Update configuration temporarily in memory/env."""
-    if "groq_api_key" in data:
-        config.GROQ_API_KEY = data["groq_api_key"]
-        os.environ["GROQ_API_KEY"] = data["groq_api_key"]
-    if "email_address" in data:
-        config.EMAIL_ADDRESS = data["email_address"]
-    if "email_app_password" in data:
-        config.EMAIL_APP_PASSWORD = data["email_app_password"]
-    if "weeks_back" in data:
-        config.WEEKS_BACK = int(data["weeks_back"])
-    
-    return {"status": "Updated successfully"}
-
-@app.get("/api/reviews")
-async def get_reviews(limit: int = 100):
-    """Fetch reviews from files if available, else return empty."""
-    path = os.path.join(config.DATA_PROCESSED_DIR, "reviews_cleaned.csv")
-    if os.path.exists(path):
-        df = pd.read_csv(path)
-        return df.head(limit).to_dict("records")
-    return []
-
-@app.post("/api/fetch")
-async def fetch_reviews_api():
-    """Trigger review fetching and cleaning process."""
+# ── Step 2: Dedicated Test Endpoint ───────────────────────
+@app.get("/api/test-email")
+async def test_email_endpoint():
+    """Quickly verify SMTP connectivity."""
+    logger.info("Manual trigger: /api/test-email hit")
     try:
-        logger.info("Fetching reviews...")
-        apple = fetch_apple_reviews()
-        google = fetch_google_reviews()
-        all_reviews = apple + google
-        
-        if not all_reviews:
-            raise HTTPException(status_code=404, detail="No reviews found")
-            
-        clean = strip_pii_from_reviews(all_reviews)
-        
-        # Save to CSV
-        df = pd.DataFrame(clean)
-        csv_path = os.path.join(config.DATA_PROCESSED_DIR, "reviews_cleaned.csv")
-        df.to_csv(csv_path, index=False)
-        
-        return {
-            "status": "success",
-            "count": len(clean),
-            "apple_count": len(apple),
-            "google_count": len(google)
+        # Create a dummy note for testing
+        test_note = {
+            "week_label": "PROD-TEST",
+            "markdown": "# Production SMTP Test\n\nIf you see this, your SMTP configuration is working perfectly.",
+            "metadata": {"top_themes": ["Test"], "total_reviews": 1}
         }
+        logger.info(f"Attempting to send test email to {config.EMAIL_ADDRESS}")
+        result = draft_and_send(test_note)
+        
+        if result["sent"]:
+            return {"status": "success", "message": f"Test email sent to {config.EMAIL_ADDRESS}"}
+        else:
+            return {"status": "error", "message": "Draft saved but email failed to send. Check logs.", "draft": result["draft_path"]}
     except Exception as e:
-        logger.error(f"Fetch failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Test email failed: {str(e)}", exc_info=True)
+        return {"status": "error", "detail": str(e), "traceback": traceback.format_exc()}
 
-@app.post("/api/analyze")
-async def analyze_reviews_api():
-    """Trigger theme analysis and classification."""
-    try:
-        path = os.path.join(config.DATA_PROCESSED_DIR, "reviews_cleaned.csv")
-        if not os.path.exists(path):
-            raise HTTPException(status_code=400, detail="Reviews not fetched yet. Run fetch first.")
-            
-        df = pd.read_csv(path)
-        reviews = df.to_dict("records")
-        
-        logger.info("Generating themes via LLM...")
-        themes = generate_themes(reviews)
-        
-        logger.info("Classifying reviews into themes...")
-        grouped = assign_themes(reviews, themes)
-        
-        # Save grouped reviews
-        out_path = os.path.join(config.DATA_PROCESSED_DIR, "reviews_grouped.csv")
-        pd.DataFrame(grouped).to_csv(out_path, index=False)
-        
-        return {
-            "status": "success",
-            "themes": themes,
-            "grouped_count": len(grouped)
-        }
-    except Exception as e:
-        logger.error(f"Analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/report")
-async def build_report_api():
-    """Generate the weekly pulse note."""
-    try:
-        path = os.path.join(config.DATA_PROCESSED_DIR, "reviews_grouped.csv")
-        if not os.path.exists(path):
-            raise HTTPException(status_code=400, detail="Reviews not analyzed yet. Run analyze first.")
-            
-        df = pd.read_csv(path)
-        grouped = df.to_dict("records")
-        
-        logger.info("Building note...")
-        note = build_weekly_note(grouped)
-        note_path = save_note(note)
-        
-        return {
-            "status": "success",
-            "note": note,
-            "path": note_path
-        }
-    except Exception as e:
-        logger.error(f"Report build failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/email")
-async def send_email_api():
-    """Draft and send/save the email pulse."""
-    try:
-        path = os.path.join(config.DATA_PROCESSED_DIR, "reviews_grouped.csv")
-        if not os.path.exists(path):
-            raise HTTPException(status_code=400, detail="Reviews not analyzed yet.")
-            
-        df = pd.read_csv(path)
-        grouped = df.to_dict("records")
-        note = build_weekly_note(grouped) # Ensure we have latest note
-        
-        logger.info("Drafting/Sending email...")
-        result = draft_and_send(note)
-        
-        return {
-            "status": "success",
-            "sent": result["sent"],
-            "draft_path": result["draft_path"],
-            "recipient": result["to"]
-        }
-    except Exception as e:
-        logger.error(f"Email failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/run_pipeline")
-async def run_pipeline_api(data: Dict = Body(default={})):
-    """Trigger the full one-click pipeline."""
+# ── Step 8: Manual Trigger Endpoint ───────────────────────
+@app.post("/api/run-weekly-pulse")
+async def trigger_pipeline(data: Dict = Body(default={})):
+    """Full pipeline execution with deep logging."""
+    logger.info(f"Manual trigger: /api/run-weekly-pulse hit with data: {data}")
     try:
         if "weeks_back" in data:
             config.WEEKS_BACK = int(data["weeks_back"])
         if "email" in data:
             config.EMAIL_ADDRESS = data["email"]
             
-        logger.info(f"Running full pipeline for {config.WEEKS_BACK} weeks, sending to: {config.EMAIL_ADDRESS}")
+        logger.info(f"Starting pipeline orchestration for {config.WEEKS_BACK} weeks...")
         results = run_weekly_pulse()
+        
+        logger.info(f"Pipeline finished with status: {results.get('status')}")
         return results
     except Exception as e:
-        logger.error(f"Pipeline failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Pipeline failed significantly: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail={"error": str(e), "traceback": traceback.format_exc()})
+
+@app.post("/api/run_pipeline")
+async def run_pipeline_legacy(data: Dict = Body(default={})):
+    """Legacy endpoint wrapper."""
+    return await trigger_pipeline(data)
+
+@app.get("/api/health")
+async def health():
+    """Health check endpoint for monitoring."""
+    return {"status": "ok", "message": "Backend is healthy and reachable"}
 
 # ── Serve Frontend ──────────────────────────────────────────
-
-# If frontend folder exists, serve index.html as homepage
 @app.get("/")
 async def homepage():
-    return FileResponse(os.path.join(os.path.dirname(__file__), "frontend", "index.html"))
-
-# Mount static files (JS, CSS)
-if os.path.exists(os.path.join(os.path.dirname(__file__), "frontend")):
-    app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "frontend")), name="static")
+    return JSONResponse({"status": "active", "service": "INDmoney API", "docs": "/docs"})
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8080))
-    logger.info(f"Starting server on port {port}...")
+    port = int(os.getenv("PORT", 8080))
+    # Step 7: Bind to 0.0.0.0 for production exposure
+    logger.info(f"🚀 Starting Production-Ready Server on port {port}...")
     uvicorn.run(app, host="0.0.0.0", port=port)

@@ -1,14 +1,13 @@
-"""
-Orchestrator — End-to-end pipeline for the INDmoney Weekly Review Pulse.
-Ties together ingestion → PII stripping → theme generation → note building → email.
-"""
-
 import json
 import os
 import sys
 from datetime import datetime
-
+import logging
 import pandas as pd
+import traceback
+
+# ── Step 3: Deep Logging Configuration ──────────────────────
+logger = logging.getLogger("INDmoney-Orchestrator")
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config
@@ -23,97 +22,94 @@ from src.report.email_drafter import draft_and_send
 
 
 def run_weekly_pulse(target_week: str = None, skip_email: bool = False) -> dict:
-    """
-    Run the complete weekly pulse pipeline.
+    """Run the complete weekly pulse pipeline with robust logging."""
+    logger.info("🚀 Starting INDmoney Weekly Review Pulse Orchestration")
+    
+    results = {"status": "started", "logs": []}
 
-    Args:
-        target_week: Optional week label (e.g. "W12-2026"), defaults to latest
-        skip_email: If True, skip email sending (still saves draft)
+    try:
+        # ── Phase 1: Ingest Reviews ───────────────────────────
+        logger.info("📡 Phase 1: Fetching Raw Reviews from Stores...")
+        apple_reviews = fetch_apple_reviews()
+        google_reviews = fetch_google_reviews()
+        
+        all_reviews = apple_reviews + google_reviews
+        logger.info(f"   Collected {len(all_reviews)} total reviews (Apple: {len(apple_reviews)}, Google: {len(google_reviews)})")
 
-    Returns:
-        Dict with pipeline results
-    """
-    print("=" * 60)
-    print("INDmoney Weekly Review Pulse - Pipeline Starting")
-    print(f"   Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
+        if not all_reviews:
+            logger.error("❌ No reviews found. Pipeline halted.")
+            return {"status": "error", "message": "No reviews fetched"}
 
-    results = {}
+        # ── PII Stripping ─────────────────────────────────────
+        logger.info("🛡️ Phase 1b: Redacting PII from Review Data...")
+        clean_reviews = strip_pii_from_reviews(all_reviews)
 
-    # ── Phase 1: Ingest Reviews ───────────────────────────
-    print("\nPhase 1: Fetching Reviews...")
-    apple_reviews = fetch_apple_reviews()
-    google_reviews = fetch_google_reviews()
+        # Save cleaned reviews to CSV
+        df = pd.DataFrame(clean_reviews)
+        csv_path = os.path.join(config.DATA_PROCESSED_DIR, "reviews_cleaned.csv")
+        df.to_csv(csv_path, index=False, encoding="utf-8")
+        logger.info(f"   Cleaned data saved to {csv_path}")
 
-    all_reviews = apple_reviews + google_reviews
-    print(f"  Total raw reviews: {len(all_reviews)}")
+        results["reviews_count"] = len(clean_reviews)
+        results["csv_path"] = csv_path
 
-    if not all_reviews:
-        print("No reviews fetched. Check network/API access.")
-        return {"error": "No reviews fetched"}
+        # ── Phase 2: Generate Themes ──────────────────────────
+        logger.info("🧠 Phase 2: Identifying Themes via Groq AI...")
+        themes = generate_themes(clean_reviews)
+        logger.info(f"   AI identified {len(themes)} key themes.")
 
-    # ── PII Stripping ─────────────────────────────────────
-    print("\nPhase 1b: Stripping PII...")
-    clean_reviews = strip_pii_from_reviews(all_reviews)
+        logger.info("🏷️ Phase 2b: Classifying Reviews into Strategic Themes...")
+        grouped_reviews = assign_themes(clean_reviews, themes)
 
-    # Save cleaned reviews to CSV
-    df = pd.DataFrame(clean_reviews)
-    csv_path = os.path.join(config.DATA_PROCESSED_DIR, "reviews_cleaned.csv")
-    df.to_csv(csv_path, index=False, encoding="utf-8")
-    print(f"  Saved cleaned reviews: {csv_path}")
+        # Save grouped reviews
+        grouped_df = pd.DataFrame(grouped_reviews)
+        grouped_csv = os.path.join(config.DATA_PROCESSED_DIR, "reviews_grouped.csv")
+        grouped_df.to_csv(grouped_csv, index=False, encoding="utf-8")
+        logger.info(f"   Thematic data saved to {grouped_csv}")
 
-    # Also save as JSON
-    json_path = os.path.join(config.DATA_PROCESSED_DIR, "reviews_cleaned.json")
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(clean_reviews, f, indent=2, ensure_ascii=False)
+        results["themes"] = themes
+        results["grouped_csv"] = grouped_csv
 
-    results["reviews_count"] = len(clean_reviews)
-    results["csv_path"] = csv_path
+        # ── Phase 3: Build Weekly Note ────────────────────────
+        logger.info("📝 Phase 3: Building Executive Weekly Note...")
+        note = build_weekly_note(grouped_reviews, target_week)
+        note_path = save_note(note)
+        logger.info(f"   Weekly pulse report built and saved: {note_path}")
 
-    # ── Phase 2: Generate Themes ──────────────────────────
-    print("\nPhase 2: Generating Themes via Groq LLM...")
-    themes = generate_themes(clean_reviews)
+        results["note"] = note
+        results["note_path"] = note_path
 
-    print("\nPhase 2b: Classifying Reviews into Themes...")
-    grouped_reviews = assign_themes(clean_reviews, themes)
+        # ── Phase 4: Draft & Send Email ───────────────────────
+        if skip_email:
+            logger.info("✉️ Phase 4: Skipping Actual Email Send (Dry-run mode).")
+            results["email"] = {"sent": False, "message": "Skipped per skip_email parameter"}
+        else:
+            logger.info("✉️ Phase 4: Composing and Dispatching Pulse Email...")
+            email_result = draft_and_send(note)
+            results["email"] = email_result
+            if email_result.get("sent"):
+                logger.info(f"   ✅ Email successfully sent to {email_result.get('to')}")
+            else:
+                logger.warning("   ⚠️ Email delivery failed. Backup draft saved.")
 
-    # Save grouped reviews
-    grouped_df = pd.DataFrame(grouped_reviews)
-    grouped_csv = os.path.join(config.DATA_PROCESSED_DIR, "reviews_grouped.csv")
-    grouped_df.to_csv(grouped_csv, index=False, encoding="utf-8")
+        results["status"] = "success"
+        logger.info("⭐ INDmoney Weekly Pulse Pipeline Successfully Completed.")
+        return results
 
-    results["themes"] = themes
-    results["grouped_csv"] = grouped_csv
-
-    # ── Phase 3: Build Weekly Note ────────────────────────
-    print("\nPhase 3: Building Weekly Pulse Note...")
-    note = build_weekly_note(grouped_reviews, target_week)
-    note_path = save_note(note)
-
-    results["note"] = note
-    results["note_path"] = note_path
-
-    # ── Phase 4: Draft & Send Email ───────────────────────
-    print("\nPhase 4: Drafting Email...")
-    email_result = draft_and_send(note)
-    results["email"] = email_result
-
-    # ── Summary ───────────────────────────────────────────
-    print("\n" + "=" * 60)
-    print("Pipeline Complete!")
-    print(f"   Reviews analyzed: {results['reviews_count']}")
-    print(f"   Themes found: {len(themes)}")
-    print(f"   Weekly note: {note_path}")
-    print(f"   Email sent: {email_result.get('sent', False)}")
-    print(f"   Email draft: {email_result.get('draft_path', 'N/A')}")
-    print("=" * 60)
-
-    return results
+    except Exception as e:
+        logger.error(f"💥 CRITICAL PIPELINE FAILURE: {str(e)}", exc_info=True)
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
 
 
 if __name__ == "__main__":
     import argparse
-
+    # Ensure logging shows in console when run directly
+    logging.basicConfig(level=logging.INFO)
+    
     parser = argparse.ArgumentParser(description="INDmoney Weekly Review Pulse")
     parser.add_argument("--week", type=str, help="Target week (e.g. W12-2026)")
     parser.add_argument("--skip-email", action="store_true", help="Skip email sending")
