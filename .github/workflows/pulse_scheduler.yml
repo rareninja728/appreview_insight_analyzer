@@ -2,8 +2,8 @@ name: INDmoney Weekly Pulse Scheduler
 
 on:
   schedule:
-    # Runs daily at 09:50 UTC (3:20 PM IST)
-    - cron: '50 9 * * *'
+    # Runs every Monday at 8:30 AM IST (3:00 AM UTC)
+    - cron: '0 3 * * 1'
   # Allows manual trigger from the GitHub Actions tab
   workflow_dispatch:
     inputs:
@@ -21,8 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     # Hard timeout — prevents hung SMTP or LLM calls from burning minutes
     timeout-minutes: 15
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
     steps:
       - name: Checkout repository
@@ -39,19 +37,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ── Validate secrets BEFORE running the pipeline ─────────────────────
-      # This provides a clear, actionable error message if secrets are missing
-      # in GitHub → Settings → Secrets and variables → Actions.
       - name: Validate required secrets
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           MISSING=()
           [ -z "$GROQ_API_KEY" ]       && MISSING+=("GROQ_API_KEY")
           [ -z "$EMAIL_ADDRESS" ]      && MISSING+=("EMAIL_ADDRESS")
           [ -z "$EMAIL_APP_PASSWORD" ] && MISSING+=("EMAIL_APP_PASSWORD")
+          [ -z "$GEMINI_API_KEY" ]     && MISSING+=("GEMINI_API_KEY")
 
           if [ ${#MISSING[@]} -gt 0 ]; then
             echo "::error::Missing GitHub Secrets: ${MISSING[*]}"
@@ -63,17 +60,18 @@ jobs:
             echo "  GROQ_API_KEY       — from console.groq.com"
             echo "  EMAIL_ADDRESS      — your Gmail address"
             echo "  EMAIL_APP_PASSWORD — Gmail App Password (NOT your login password)"
+            echo "  GEMINI_API_KEY     — from console.gemini.google.com"
             exit 1
           fi
 
           echo "✅ All required secrets are present."
 
-      # ── Run the pipeline ──────────────────────────────────────────────────
       - name: Run Weekly Pulse Pipeline
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           # Optional overrides — set in secrets or leave to defaults
           GROQ_MODEL: ${{ secrets.GROQ_MODEL || 'llama-3.1-8b-instant' }}
           SMTP_SERVER: ${{ vars.SMTP_SERVER || 'smtp.gmail.com' }}
@@ -91,7 +89,6 @@ jobs:
           echo "Starting INDmoney Weekly Pulse..."
           python cli.py run $SKIP_ARG
 
-      # ── Upload generated outputs as artifacts for download/debugging ──────
       - name: Upload pulse outputs
         uses: actions/upload-artifact@v4
         if: always()   # Upload even on failure so we can inspect what was generated
