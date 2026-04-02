@@ -2,10 +2,9 @@ name: INDmoney Weekly Pulse Scheduler
 
 on:
   schedule:
-    # Runs every 5 minutes as requested. 
-    # Runs daily at 09:50 UTC (3:20 PM IST)
-    - cron: '50 9 * * *'
-  # Allows you to trigger the workflow manually from the GitHub Actions tab
+    on:
+  schedule:
+    - cron: '0 9 * * 1'
   workflow_dispatch:
 
 jobs:
