@@ -2,9 +2,7 @@ name: INDmoney Weekly Pulse Scheduler
 
 on:
   schedule:
-    on:
-  schedule:
-    - cron: '0 9 * * 1'
+    - cron: '30 3 * * 1'   # Monday 9 AM IST
   workflow_dispatch:
 
 jobs:
@@ -12,12 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-  EMAIL_ADDRESS: ${{ sugandhawankar123@gmail.com }}
-  EMAIL_APP_PASSWORD: ${{ lprq rnex tmff afcf }}
-  GROQ_API_KEY: ${{ ${{ secrets.GROQ_API_KEY }}}}
-  GEMINI_API_KEY: ${{ AIzaSyDbFC90GC62tgDHGTqV8A7NPR_4ScYvAqI }}
-      
-    
+      EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+      EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,11 +31,4 @@ jobs:
           pip install -r requirements.txt
           
       - name: Run Weekly Pulse Pipeline
-        env:
-          # These secrets must be added to your GitHub Repository Settings -> Secrets and variables -> Actions
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
-          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
-        run: |
-          # This command executes the full pipeline and sends the email
-          python cli.py run
+        run: python cli.py run
