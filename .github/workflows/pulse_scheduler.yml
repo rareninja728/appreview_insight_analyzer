@@ -97,6 +97,13 @@ jobs:
           echo "EMAIL_APP_PASSWORD is set: $(if [ -n "$EMAIL_APP_PASSWORD" ]; then echo "YES (${#EMAIL_APP_PASSWORD} chars)"; else echo "NO"; fi)"
           echo "GEMINI_API_KEY is set: $(if [ -n "$GEMINI_API_KEY" ]; then echo "YES (${#GEMINI_API_KEY} chars)"; else echo "NO"; fi)"
           
+          # Exit early if GROQ_API_KEY is missing
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "::error::GROQ_API_KEY is empty or not set. Cannot proceed without it."
+            echo "Please check your GitHub Secrets and ensure GROQ_API_KEY is properly configured."
+            exit 1
+          fi
+          
           # Determine email flag
           SKIP_ARG=""
           if [ "${{ github.event.inputs.skip_email }}" = "true" ]; then
