@@ -2,14 +2,27 @@ name: INDmoney Weekly Pulse Scheduler
 
 on:
   schedule:
-    - cron: '30 3 * * 1'   # Monday 9 AM IST
+    # Runs every Monday at 8:30 AM IST (3:00 AM UTC)
+    - cron: '0 3 * * 1'
+  # Allows manual trigger from the GitHub Actions tab
   workflow_dispatch:
+    inputs:
+      skip_email:
+        description: 'Skip sending email (dry-run mode)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   execute-weekly-pulse:
     runs-on: ubuntu-latest
-
+    # Hard timeout — prevents hung SMTP or LLM calls from burning minutes
+    timeout-minutes: 15
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
       EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -17,10 +30,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -29,6 +42,73 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Validate required secrets
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          MISSING=()
+          [ -z "$GROQ_API_KEY" ]       && MISSING+=("GROQ_API_KEY")
+          [ -z "$EMAIL_ADDRESS" ]      && MISSING+=("EMAIL_ADDRESS")
+          [ -z "$EMAIL_APP_PASSWORD" ] && MISSING+=("EMAIL_APP_PASSWORD")
+          [ -z "$GEMINI_API_KEY" ]     && MISSING+=("GEMINI_API_KEY")
+
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo "::error::Missing GitHub Secrets: ${MISSING[*]}"
+            echo ""
+            echo "Fix: Go to your repository → Settings → Secrets and variables"
+            echo "     → Actions → New repository secret"
+            echo ""
+            echo "Required secrets:"
+            echo "  GROQ_API_KEY       — from console.groq.com"
+            echo "  EMAIL_ADDRESS      — your Gmail address"
+            echo "  EMAIL_APP_PASSWORD — Gmail App Password (NOT your login password)"
+            echo "  GEMINI_API_KEY     — from console.gemini.google.com"
+            exit 1
+          fi
+
+          echo "✅ All required secrets are present."
           
       - name: Run Weekly Pulse Pipeline
-        run: python cli.py run
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Optional overrides — set in secrets or leave to defaults
+          GROQ_MODEL: ${{ secrets.GROQ_MODEL || 'llama-3.1-8b-instant' }}
+          SMTP_SERVER: ${{ vars.SMTP_SERVER || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ vars.SMTP_PORT || '465' }}
+          WEEKS_BACK: ${{ vars.WEEKS_BACK || '1' }}
+          MAX_THEMES: ${{ vars.MAX_THEMES || '5' }}
+        run: |
+          # Debug: Verify environment variables are set
+          echo "GROQ_API_KEY is set: $(if [ -n "$GROQ_API_KEY" ]; then echo "YES (${#GROQ_API_KEY} chars)"; else echo "NO"; fi)"
+          echo "EMAIL_ADDRESS is set: $(if [ -n "$EMAIL_ADDRESS" ]; then echo "YES"; else echo "NO"; fi)"
+          echo "EMAIL_APP_PASSWORD is set: $(if [ -n "$EMAIL_APP_PASSWORD" ]; then echo "YES (${#EMAIL_APP_PASSWORD} chars)"; else echo "NO"; fi)"
+          echo "GEMINI_API_KEY is set: $(if [ -n "$GEMINI_API_KEY" ]; then echo "YES (${#GEMINI_API_KEY} chars)"; else echo "NO"; fi)"
+          
+          # Determine email flag
+          SKIP_ARG=""
+          if [ "${{ github.event.inputs.skip_email }}" = "true" ]; then
+            SKIP_ARG="--skip-email"
+            echo "Dry-run mode: Email will NOT be sent."
+          fi
+
+          echo "Starting INDmoney Weekly Pulse..."
+          python cli.py run $SKIP_ARG
+
+      - name: Upload pulse outputs
+        uses: actions/upload-artifact@v4
+        if: always()   # Upload even on failure so we can inspect what was generated
+        with:
+          name: pulse-outputs-${{ github.run_id }}
+          path: |
+            outputs/weekly_notes/
+            outputs/email_drafts/
+            data/processed/
+          retention-days: 14
+          if-no-files-found: ignore
