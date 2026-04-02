@@ -25,11 +25,15 @@ EMAIL_ADDRESS = SENDER_EMAIL # Default recipient to sender
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 465))
 
-# Soft validation — warn instead of crashing at import time.
-# Hard asserts here would cause a silent AssertionError that kills GitHub Actions
-# within 20–30s before any diagnostic output is shown.
+# Validation — warn for email keys, hard-fail for GROQ_API_KEY since sending
+# a blank Bearer token causes a cryptic LocalProtocolError deep in httpx/h11.
 if not GROQ_API_KEY:
-    _logger.warning("WARNING: GROQ_API_KEY is not set. LLM calls will fail.")
+    raise RuntimeError(
+        "\n\n❌ GROQ_API_KEY is not set or is empty.\n"
+        "   • Locally: add GROQ_API_KEY=gsk_... to your .env file\n"
+        "   • GitHub Actions: go to Settings → Secrets and variables → Actions\n"
+        "     and add/update the GROQ_API_KEY secret (get it from console.groq.com)\n"
+    )
 if not SENDER_EMAIL:
     _logger.warning("WARNING: EMAIL_ADDRESS is not set. Emails will not send.")
 if not EMAIL_APP_PASSWORD:

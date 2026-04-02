@@ -51,13 +51,19 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           MISSING=()
-          [ -z "$GROQ_API_KEY" ]       && MISSING+=("GROQ_API_KEY")
-          [ -z "$EMAIL_ADDRESS" ]      && MISSING+=("EMAIL_ADDRESS")
-          [ -z "$EMAIL_APP_PASSWORD" ] && MISSING+=("EMAIL_APP_PASSWORD")
-          [ -z "$GEMINI_API_KEY" ]     && MISSING+=("GEMINI_API_KEY")
+          # Strip whitespace before checking — catches secrets set to blank/spaces
+          GROQ_KEY_CLEAN=$(echo "$GROQ_API_KEY" | tr -d '[:space:]')
+          EMAIL_CLEAN=$(echo "$EMAIL_ADDRESS" | tr -d '[:space:]')
+          EMAIL_PW_CLEAN=$(echo "$EMAIL_APP_PASSWORD" | tr -d '[:space:]')
+          GEMINI_CLEAN=$(echo "$GEMINI_API_KEY" | tr -d '[:space:]')
+
+          [ -z "$GROQ_KEY_CLEAN" ]   && MISSING+=("GROQ_API_KEY")
+          [ -z "$EMAIL_CLEAN" ]      && MISSING+=("EMAIL_ADDRESS")
+          [ -z "$EMAIL_PW_CLEAN" ]   && MISSING+=("EMAIL_APP_PASSWORD")
+          [ -z "$GEMINI_CLEAN" ]     && MISSING+=("GEMINI_API_KEY")
 
           if [ ${#MISSING[@]} -gt 0 ]; then
-            echo "::error::Missing GitHub Secrets: ${MISSING[*]}"
+            echo "::error::Missing or blank GitHub Secrets: ${MISSING[*]}"
             echo ""
             echo "Fix: Go to your repository → Settings → Secrets and variables"
             echo "     → Actions → New repository secret"
@@ -70,7 +76,7 @@ jobs:
             exit 1
           fi
 
-          echo "✅ All required secrets are present."
+          echo "✅ All required secrets are present and non-empty."
           
       - name: Run Weekly Pulse Pipeline
         env:
