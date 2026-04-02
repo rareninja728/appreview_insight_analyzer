@@ -11,17 +11,18 @@ _logger = logging.getLogger("INDmoney-Config")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8080").rstrip("/")
 
 # ── Groq LLM ──────────────────────────────────────────────
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+# Strip whitespace so a secret saved with accidental spaces/newlines is caught
+GROQ_API_KEY = (os.getenv("GROQ_API_KEY") or "").strip() or None
+GROQ_MODEL = (os.getenv("GROQ_MODEL") or "llama-3.1-8b-instant").strip()
 
 # ── App Identifiers ───────────────────────────────────────
 APPLE_APP_ID = os.getenv("APPLE_APP_ID", "1450178837")
 GOOGLE_PACKAGE = os.getenv("GOOGLE_PACKAGE", "in.indwealth")
 
 # ── Email Configuration (Step 4) ──────────────────────────
-SENDER_EMAIL = os.getenv("EMAIL_ADDRESS")
-EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
-EMAIL_ADDRESS = SENDER_EMAIL # Default recipient to sender
+SENDER_EMAIL = (os.getenv("EMAIL_ADDRESS") or "").strip() or None
+EMAIL_APP_PASSWORD = (os.getenv("EMAIL_APP_PASSWORD") or "").strip() or None
+EMAIL_ADDRESS = SENDER_EMAIL  # Default recipient to sender
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 465))
 
@@ -29,10 +30,12 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", 465))
 # a blank Bearer token causes a cryptic LocalProtocolError deep in httpx/h11.
 if not GROQ_API_KEY:
     raise RuntimeError(
-        "\n\n❌ GROQ_API_KEY is not set or is empty.\n"
-        "   • Locally: add GROQ_API_KEY=gsk_... to your .env file\n"
-        "   • GitHub Actions: go to Settings → Secrets and variables → Actions\n"
-        "     and add/update the GROQ_API_KEY secret (get it from console.groq.com)\n"
+        "\n\n❌ GROQ_API_KEY is not set, empty, or contains only whitespace.\n"
+        "   • Locally  : add GROQ_API_KEY=gsk_... to your .env file\n"
+        "   • GitHub   : Settings → Secrets and variables → Actions\n"
+        "                Delete the existing GROQ_API_KEY secret and re-create it.\n"
+        "                Make sure there are NO spaces/newlines around the key value.\n"
+        "   • Get a key: https://console.groq.com\n"
     )
 if not SENDER_EMAIL:
     _logger.warning("WARNING: EMAIL_ADDRESS is not set. Emails will not send.")
